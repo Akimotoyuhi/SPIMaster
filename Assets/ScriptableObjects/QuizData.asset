@@ -1,0 +1,16 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9fb9c2f22ef2514ba0e8177289830e0, type: 3}
+  m_Name: QuizData
+  m_EditorClassIdentifier: 
+  m_url: https://script.googleusercontent.com/macros/echo?user_content_key=LyssW5ur9ORwp3tQbPQYAs8RWUpA_VQTjoYLQCt8DTHEGsrq4yWLxzviVROebP7dV8Ld7qN-rE7H9NuojcH3eKfrnpQPbUKFm5_BxDlH2jW0nuo2oDemN9CCS2h10ox_1xSncGQajx_ryfhECjZEnHyvYLQtqWjsRtXPAPfrlGXGDsu9HshLkkSgGIIW_9AkhQA_KRHaoxNw8iO4oXTmoJ8WMnvXTBOc1_3bb6yrBEGv2mEkBdx3kg&lib=MTA5cAeL8KBOKbyugWF27HwbkmmzP1yGF
+  m_databases: []
