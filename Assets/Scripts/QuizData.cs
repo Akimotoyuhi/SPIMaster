@@ -5,9 +5,18 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "QuizData")]
 public class QuizData : ScriptableObject
 {
-    [SerializeField] List<QuizDataBase> m_databases = new List<QuizDataBase>();
+    [SerializeField] List<QuizDataBase> m_databases;
     public List<QuizDataBase> Databases => m_databases;
-
+    public void Setup(List<List<string>> dataList)
+    {
+        m_databases.Clear();
+        foreach (var d in dataList)
+        {
+            QuizDataBase db = new QuizDataBase();
+            db.Setup(d);
+            m_databases.Add(db);
+        }
+    }
 }
 
 [System.Serializable]
@@ -21,8 +30,14 @@ public class QuizDataBase
     public string Question => m_question;
     public string correct => m_correct;
     public string[] Choices => m_choices;
-    public void Setup(string sentence, string question, string correct, string[] choices)
+    public void Setup(List<string> texts)
     {
-
+        m_sentence = texts[0];
+        texts.RemoveAt(0);
+        m_question = texts[0];
+        texts.RemoveAt(0);
+        m_correct = texts[0];
+        texts.RemoveAt(0);
+        m_choices = texts.ToArray();
     }
 }

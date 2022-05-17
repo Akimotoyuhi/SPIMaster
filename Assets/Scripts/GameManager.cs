@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using System.IO;
+using System.Linq;
 
 public class GameManager : MonoBehaviour
 {
@@ -30,28 +31,14 @@ public class GameManager : MonoBehaviour
             }
             else
             {
-                List<string> vs = ConvartStr(request.downloadHandler.text);
-                foreach (var s in vs)
+                var v = JsonUtility.FromJson<MasterDataClass<QuestionDataList>>(request.downloadHandler.text);
+                List<List<string>> list = new List<List<string>>();
+                foreach (var d in v.Data)
                 {
-                    Debug.Log(s);
+                    list.Add(d.List);
                 }
+                m_quizdata.Setup(list);
             }
-        }
-
-        /// <summary>
-        /// 文字列に変換<br/>
-        /// 参考サイト　https://qiita.com/simanezumi1989/items/32436230dadf7a123de8
-        /// </summary>
-        private List<string> ConvartStr(string text)
-        {
-            List<string> ret = new List<string>();
-            StringReader sr = new StringReader(text);
-            while (sr.Peek() != -1)
-            {
-                string line = sr.ReadLine();//文字列から一行づつ読み込む
-                ret.Add(line);
-            }
-            return ret;
         }
     }
     [SerializeField] List<QuizDataList> m_data;
@@ -67,4 +54,26 @@ public class GameManager : MonoBehaviour
             StartCoroutine(item.ReadGSAsync());
         }
     }
+}
+
+public class MasterDataClass<T>
+{
+    public T[] Data;
+}
+
+[System.Serializable]
+public class QuestionDataList
+{
+    public string Sentence;
+    public string Question;
+    public string Correct;
+    public string Choice1;
+    public string Choice2;
+    public string Choice3;
+    public string Choice4;
+    public string Choice5;
+    public string Choice6;
+    public string Choice7;
+    public string Choice8;
+    public List<string> List => new List<string> { Sentence, Question, Correct, Choice1, Choice2, Choice3, Choice4, Choice5, Choice6, Choice7, Choice8 };
 }
