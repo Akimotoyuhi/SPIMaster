@@ -2,14 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
-using System.IO;
-using System.Linq;
+using DG.Tweening;
 
 public class GameManager : MonoBehaviour
 {
     [System.Serializable]
     public class QuizDataList
     {
+        //スプレッドシートURL
+        //https://docs.google.com/spreadsheets/d/1QPVKyW4J8wxgl7MFkT_2_T6TbnBQL_HgzBiCTIGkPDs/edit#gid=0
         //データの中身確認用
         //https://script.google.com/macros/s/AKfycbznFRos-8O_iZZn2jFIy3lc3QeiLSqsyUxRJj802PmaGbwVL6o27VCchxGcuGyhUDl5/exec
         [SerializeField] string m_url;
@@ -41,15 +42,20 @@ public class GameManager : MonoBehaviour
             }
         }
     }
-    [SerializeField] List<QuizDataList> m_data;
+    [SerializeField] QuizManager m_quizManager;
+    [SerializeField] List<QuizDataList> m_datas;
 
     private void Start()
     {
+        DOVirtual.DelayedCall(3f, () =>
+        {
+            m_quizManager.QuizStart(m_datas[0].QuizData, 1);
+        });
     }
 
     public void MasterDataUpdate()
     {
-        foreach (var item in m_data)
+        foreach (var item in m_datas)
         {
             StartCoroutine(item.ReadGSAsync());
         }
