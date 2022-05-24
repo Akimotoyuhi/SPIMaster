@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using System;
 
 /// <summary>
-/// 選択用ボタンに付ける
+/// クイズ中の選択用ボタンに付ける
 /// </summary>
 public class ChoiseButton : MonoBehaviour
 {

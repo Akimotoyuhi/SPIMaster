@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using DG.Tweening;
+using UniRx;
+using System;
 
 public class GameManager : MonoBehaviour
 {
-    [System.Serializable]
+    [Serializable]
     public class QuizDataList
     {
         //スプレッドシートURL
@@ -15,15 +17,18 @@ public class GameManager : MonoBehaviour
         //https://script.google.com/macros/s/AKfycbznFRos-8O_iZZn2jFIy3lc3QeiLSqsyUxRJj802PmaGbwVL6o27VCchxGcuGyhUDl5/exec
         [SerializeField] string m_url;
         [SerializeField] QuizData m_quizdata;
+        private string m_sheetName;
 
         public QuizData QuizData => m_quizdata;
+        public string SheetName => m_sheetName;
 
         /// <summary>
         /// スプレッドシートからデータを読み込む<br/>
         /// 参考サイト　https://qiita.com/simanezumi1989/items/32436230dadf7a123de8
         /// </summary>
-        public IEnumerator ReadGSAsync()
+        public IEnumerator ReadGSAsync(string sheetName)
         {
+            m_sheetName = sheetName;
             UnityWebRequest request = UnityWebRequest.Get(m_url);
             yield return request.SendWebRequest();
             if (request.error != null)
@@ -39,26 +44,110 @@ public class GameManager : MonoBehaviour
                     list.Add(d.List);
                 }
                 m_quizdata.Setup(list);
+                Debug.Log("完了");
             }
         }
     }
     [SerializeField] QuizManager m_quizManager;
+    [SerializeField] QuizSetting m_quizSetting;
     [SerializeField] List<QuizDataList> m_datas;
+    [SerializeField] List<string> m_sheetNames;
+    private IConnectableObservable<int> m_countDownTimerObservable;
+    public IObservable<int> CountDownTimer => m_countDownTimerObservable.AsObservable();
+    public static GameManager Instance { get; private set; }
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     private void Start()
     {
-        DOVirtual.DelayedCall(3f, () =>
-        {
-            m_quizManager.QuizStart(m_datas[0].QuizData, 1);
-        });
+        m_quizManager.Setup();
+        m_quizSetting.Setup(m_sheetNames);
+        //3秒カウントダウンするストリーム作成　publishでhot変換
+        m_countDownTimerObservable = CountDownTimerObservable(3).Publish();
+        m_countDownTimerObservable
+            .Subscribe((time) => Debug.Log($"{time}秒"), () => m_quizManager.QuizStart(1));
+        m_quizSetting.ViewSettingPanel();
     }
 
+    /// <summary>
+    /// クイズ開始
+    /// </summary>
+    /// <param name="nums"></param>
+    public void QuizStart(List<int> nums)
+    {
+        List<QuizDataBase> d = new List<QuizDataBase>();
+        for (int i = 0; i < nums.Count; i++)
+        {
+            List<int> vs = ToNumListNoCover(m_datas[i].QuizData.Databases.Count, nums[i]);
+            foreach (var v in vs)
+            {
+                d.Add(m_datas[i].QuizData.Databases[v]);
+            }
+        }
+        m_quizManager.SetQuizDatas = d;
+        //Connectでカウント開始
+        m_countDownTimerObservable.Connect();
+    }
+
+    /// <summary>
+    /// 被りなしの整数の配列を返す
+    /// </summary>
+    /// <param name="range">範囲</param>
+    /// <param name="element">要素数</param>
+    /// <returns>被りなしの整数の配列</returns>
+    private List<int> ToNumListNoCover(int range, int element)
+    {
+        List<int> vs = new List<int>();
+        for (int i = 0; i < element; )
+        {
+            int r = UnityEngine.Random.Range(0, range);
+            bool b = true;
+            foreach (var v in vs)
+            {
+                if (v == r)
+                    b = false;
+            }
+            if (b)
+            {
+                vs.Add(r);
+                i++;
+                if (i >= range)//回った回数がrange以上なら抜ける
+                {
+                    return vs;
+                }
+            }
+        }
+        return vs;
+    }
+
+    /// <summary>
+    /// カウントダウンタイマー<br/>
+    /// 参考 https://qiita.com/toRisouP/items/581ffc0ddce7090b275b
+    /// </summary>
+    /// <param name="time"></param>
+    /// <returns></returns>
+    private IObservable<int> CountDownTimerObservable(int time)
+    {
+        return Observable
+            //実行間隔　0秒目から1秒間隔で実行
+            .Timer(TimeSpan.FromSeconds(0), TimeSpan.FromSeconds(1))
+            //timeから実行時間分(x)引く　long型なのでキャストする必要有
+            .Select(x => (int)(time - x))
+            //0秒経過の場合はOnNext、0になったらOnComplete
+            .TakeWhile(x => x > 0);
+    }
+
+    /// <summary>
+    /// クイズデータの更新<br/>
+    /// エディタのボタンから呼ばれる事を想定している
+    /// </summary>
     public void MasterDataUpdate()
     {
-        foreach (var item in m_datas)
-        {
-            StartCoroutine(item.ReadGSAsync());
-        }
+        for (int i = 0; i < m_datas.Count; i++)
+            m_datas[i].ReadGSAsync(m_sheetNames[i]);
     }
 }
 
@@ -67,7 +156,7 @@ public class MasterDataClass<T>
     public T[] Data;
 }
 
-[System.Serializable]
+[Serializable]
 public class QuestionDataList
 {
     public string Sentence;
