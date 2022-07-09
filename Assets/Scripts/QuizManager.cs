@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UniRx;
 
 /// <summary>クイズ画面の管理</summary>
 public class QuizManager : MonoBehaviour
@@ -37,18 +38,20 @@ public class QuizManager : MonoBehaviour
             b.transform.SetParent(m_buttonParent, false);
             if (i == m_nowQuizData.Choices.Length)
             {
-                b.Setup(m_nowQuizData.correct, () =>
-                {
-                    Debug.Log("正解");
-                });
+                b.Setup(m_nowQuizData.correct);
+                b.OnClick.Subscribe(_ => Answer(true)).AddTo(b);
             }
             else
             {
-                b.Setup(m_nowQuizData.Choices[i], () =>
-                {
-                    Debug.Log("不正解");
-                });
+                b.Setup(m_nowQuizData.Choices[i]);
+                b.OnClick.Subscribe(_ => Answer(false)).AddTo(b);
             }
         }
+    }
+
+    public void Answer(bool answer)
+    {
+        string s = answer ? "正解" : "不正解";
+        Debug.Log(s);
     }
 }

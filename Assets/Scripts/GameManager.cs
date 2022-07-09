@@ -4,7 +4,9 @@ using UnityEngine;
 using UnityEngine.Networking;
 using DG.Tweening;
 using UniRx;
+using Cysharp.Threading.Tasks;
 using System;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -26,11 +28,11 @@ public class GameManager : MonoBehaviour
         /// スプレッドシートからデータを読み込む<br/>
         /// 参考サイト　https://qiita.com/simanezumi1989/items/32436230dadf7a123de8
         /// </summary>
-        public IEnumerator ReadGSAsync(string sheetName)
+        public async void ReadGSAsync(string sheetName)
         {
             m_sheetName = sheetName;
             UnityWebRequest request = UnityWebRequest.Get(m_url);
-            yield return request.SendWebRequest();
+            await request.SendWebRequest();
             if (request.error != null)
             {
                 Debug.LogError(request.error);
@@ -44,12 +46,13 @@ public class GameManager : MonoBehaviour
                     list.Add(d.List);
                 }
                 m_quizdata.Setup(list);
-                Debug.Log("完了");
+                Debug.Log($"{sheetName}のデータ読み込み完了");
             }
         }
     }
     [SerializeField] QuizManager m_quizManager;
     [SerializeField] QuizSetting m_quizSetting;
+    [SerializeField] Text m_countDownText;
     [SerializeField] List<QuizDataList> m_datas;
     [SerializeField] List<string> m_sheetNames;
     private IConnectableObservable<int> m_countDownTimerObservable;
@@ -65,10 +68,13 @@ public class GameManager : MonoBehaviour
     {
         m_quizManager.Setup();
         m_quizSetting.Setup(m_sheetNames);
+        m_countDownText.gameObject.SetActive(true);
         //3秒カウントダウンするストリーム作成　publishでhot変換
         m_countDownTimerObservable = CountDownTimerObservable(3).Publish();
         m_countDownTimerObservable
-            .Subscribe((time) => Debug.Log($"{time}秒"), () => m_quizManager.QuizStart(1));
+            .Subscribe((time) => m_countDownText.text = time.ToString(), 
+            () => m_quizManager.QuizStart(1));
+        m_countDownText.gameObject.SetActive(false);
         m_quizSetting.ViewSettingPanel();
     }
 
@@ -127,7 +133,7 @@ public class GameManager : MonoBehaviour
     /// カウントダウンタイマー<br/>
     /// 参考 https://qiita.com/toRisouP/items/581ffc0ddce7090b275b
     /// </summary>
-    /// <param name="time"></param>
+    /// <param name="time">待機時間</param>
     /// <returns></returns>
     private IObservable<int> CountDownTimerObservable(int time)
     {
@@ -147,7 +153,9 @@ public class GameManager : MonoBehaviour
     public void MasterDataUpdate()
     {
         for (int i = 0; i < m_datas.Count; i++)
+        {
             m_datas[i].ReadGSAsync(m_sheetNames[i]);
+        }
     }
 }
 
@@ -171,4 +179,10 @@ public class QuestionDataList
     public string Choice7;
     public string Choice8;
     public List<string> List => new List<string> { Sentence, Question, Correct, Choice1, Choice2, Choice3, Choice4, Choice5, Choice6, Choice7, Choice8 };
+}
+
+public enum GameState
+{
+    QuizSetting,
+    Quiz,
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System;
+using UniRx;
 
 /// <summary>
 /// クイズ中の選択用ボタンに付ける
@@ -11,17 +12,12 @@ public class ChoiseButton : MonoBehaviour
 {
     [SerializeField] Button m_button;
     [SerializeField] Text m_text;
-    private Action m_onClick;
-    public Button Button => m_button;
+    private Subject<Unit> m_onclick = new Subject<Unit>();
+    public IObservable<Unit> OnClick => m_onclick;
 
-    public void Setup(string s, Action onClick)
+    public void Setup(string s)
     {
         m_text.text = s;
-        m_onClick = onClick;
-    }
-
-    public void OnClick()
-    {
-        m_onClick();
+        m_button.onClick.AddListener(() => m_onclick.OnNext(Unit.Default));
     }
 }

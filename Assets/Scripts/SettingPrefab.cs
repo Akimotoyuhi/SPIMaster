@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// o‘è“à—e‚Ìİ’è‰æ–Ê
+/// </summary>
 public class SettingPrefab : MonoBehaviour
 {
     [SerializeField] Text m_text;

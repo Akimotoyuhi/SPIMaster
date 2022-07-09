@@ -13,6 +13,7 @@ public class QuizSetting : MonoBehaviour
     public void Setup(List<string> sheetNames)
     {
         m_quizSettingPanel.SetActive(false);
+        //İ’è€–Ú¶¬
         foreach (var item in sheetNames)
         {
             SettingPrefab s = Instantiate(m_settingPrefab);
