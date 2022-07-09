@@ -17,9 +17,10 @@ public class GameManager : MonoBehaviour
         //https://docs.google.com/spreadsheets/d/1QPVKyW4J8wxgl7MFkT_2_T6TbnBQL_HgzBiCTIGkPDs/edit#gid=0
         //データの中身確認用
         //https://script.google.com/macros/s/AKfycbznFRos-8O_iZZn2jFIy3lc3QeiLSqsyUxRJj802PmaGbwVL6o27VCchxGcuGyhUDl5/exec
+        [SerializeField] string m_sheetName;
         [SerializeField] string m_url;
         [SerializeField] QuizData m_quizdata;
-        private string m_sheetName;
+        //private string m_sheetName;
 
         public QuizData QuizData => m_quizdata;
         public string SheetName => m_sheetName;
@@ -30,7 +31,6 @@ public class GameManager : MonoBehaviour
         /// </summary>
         public async void ReadGSAsync(string sheetName)
         {
-            m_sheetName = sheetName;
             UnityWebRequest request = UnityWebRequest.Get(m_url);
             await request.SendWebRequest();
             if (request.error != null)
@@ -54,9 +54,13 @@ public class GameManager : MonoBehaviour
     [SerializeField] QuizSetting m_quizSetting;
     [SerializeField] Text m_countDownText;
     [SerializeField] List<QuizDataList> m_datas;
-    [SerializeField] List<string> m_sheetNames;
+    [SerializeField] GameObject m_quizSettingPanel;
+    [SerializeField] GameObject m_quizPanel;
+    /// <summary>ゲームの状態</summary>
+    private ReactiveProperty<GameState> m_gameState = new ReactiveProperty<GameState>();
     private IConnectableObservable<int> m_countDownTimerObservable;
     public IObservable<int> CountDownTimer => m_countDownTimerObservable.AsObservable();
+    public IObservable<GameState> GameStateSubject => m_gameState;
     public static GameManager Instance { get; private set; }
 
     private void Awake()
@@ -67,7 +71,9 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         m_quizManager.Setup();
-        m_quizSetting.Setup(m_sheetNames);
+        List<string> list = new List<string>();
+        m_datas.ForEach(d => list.Add(d.SheetName));
+        m_quizSetting.Setup(list);
         m_countDownText.gameObject.SetActive(true);
         //3秒カウントダウンするストリーム作成　publishでhot変換
         m_countDownTimerObservable = CountDownTimerObservable(3).Publish();
@@ -75,7 +81,8 @@ public class GameManager : MonoBehaviour
             .Subscribe((time) => m_countDownText.text = time.ToString(), 
             () => m_quizManager.QuizStart(1));
         m_countDownText.gameObject.SetActive(false);
-        m_quizSetting.ViewSettingPanel();
+        GameStateSubject.Subscribe(s => SetPanel(s)).AddTo(this);
+        m_gameState.Value = GameState.QuizSetting;
     }
 
     /// <summary>
@@ -154,7 +161,22 @@ public class GameManager : MonoBehaviour
     {
         for (int i = 0; i < m_datas.Count; i++)
         {
-            m_datas[i].ReadGSAsync(m_sheetNames[i]);
+            m_datas[i].ReadGSAsync(m_datas[i].SheetName);
+        }
+    }
+
+    private void SetPanel(GameState gameState)
+    {
+        switch (gameState)
+        {
+            case GameState.QuizSetting:
+                m_quizSettingPanel.SetActive(true);
+                m_quizPanel.SetActive(false);
+                break;
+            case GameState.Quiz:
+                m_quizSettingPanel.SetActive(false);
+                m_quizPanel.SetActive(true);
+                break;
         }
     }
 }

@@ -7,7 +7,6 @@ using UniRx;
 /// <summary>クイズ画面の管理</summary>
 public class QuizManager : MonoBehaviour
 {
-    [SerializeField] GameObject m_quizPanel;
     [SerializeField] Transform m_buttonParent;
     [SerializeField] Text m_questionText;
     [SerializeField] ChoiseButton m_choiceButtonPrefab;
@@ -19,7 +18,6 @@ public class QuizManager : MonoBehaviour
 
     public void Setup()
     {
-        m_quizPanel.SetActive(false);
         //m_quizData = quizData;
     }
 
@@ -28,7 +26,6 @@ public class QuizManager : MonoBehaviour
     /// </summary>
     public void QuizStart(int questionNum)
     {
-        m_quizPanel.SetActive(true);
         //出題画面の表示　とりあえず1問だけ
         m_nowQuizData = m_quizdatas[0];
         m_questionText.text = m_nowQuizData.Sentence + "\n" + m_nowQuizData.Question;
